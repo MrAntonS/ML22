@@ -1,5 +1,5 @@
 # This is just for me
-Read this for ml
+Read this for study purposes
 
 
 Christopher Bishop, Pattern Recognition and Machine Learning
