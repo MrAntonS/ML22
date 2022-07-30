@@ -1,4 +1,6 @@
 # This is just for me
+One day i'll become A.I. master :0
+
 Read this for study purposes
 
 
