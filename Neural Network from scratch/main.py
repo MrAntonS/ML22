@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib as plt
 
 
-np.random.seed(42)
-np.set_printoptions(precision=70)
+np.random.seed(0)
+# np.set_printoptions(precision=70)
 
 
 class Neuron():
@@ -37,9 +37,13 @@ class LinearLayer():
         result = np.array([i.forward(inputs)
                           for i in self.neurons], dtype=np.float64)
         return result
+    def get_weights(self):
+        return np.array([i.get_weights() for i in self.neurons])
 
 
 inputs = np.array([1, 2, 3, 4])
 network_layer = LinearLayer(len(inputs), 10)
 print(network_layer.forward(inputs))
+print(network_layer.get_weights())
+
 
