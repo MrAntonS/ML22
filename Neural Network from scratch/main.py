@@ -16,7 +16,7 @@ class Neuron():
         return 1 / (1 + np.exp(-1 * x))
 
     def get_scalar(self, inputs):
-        return np.sum(inputs * self.w) + self.bias
+        return np.dot(inputs, self.w) + self.bias
 
     def forward(self, inputs):
         return self._sigmoid(np.sum(inputs * self.w) + self.bias)
