@@ -33,7 +33,7 @@ class LinearLayer():
     def _test(self, x):
         return x.forward()
 
-    def calculate_forwarding(self, inputs: np.ndarray):
+    def forward(self, inputs: np.ndarray):
         result = np.array([i.forward(inputs)
                           for i in self.neurons], dtype=np.float64)
         return result
@@ -41,4 +41,5 @@ class LinearLayer():
 
 inputs = np.array([1, 2, 3, 4])
 network_layer = LinearLayer(len(inputs), 10)
-print(network_layer.calculate_forwarding(inputs))
+print(network_layer.forward(inputs))
+
