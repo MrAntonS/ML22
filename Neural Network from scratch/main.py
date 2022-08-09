@@ -32,18 +32,21 @@ class Neuron():
     def _relu(self, x):
         return np.where(0 >= x, 0, x)
 
-    def get_scalar(self, inputs):
+    def predict(self, inputs):
         self.scalar = np.dot(inputs, self.w) + self.bias
         return self.scalar
-
+    
     def forward(self, inputs):
-        return self._sigmoid(self.get_scalar(inputs))
+        return self._sigmoid(self.predict(inputs))
 
     def forward_relu(self, inputs):
-        return self._relu(self.get_scalar(inputs))
+        return self._relu(self.predict(inputs))
 
     def get_weights(self):
         return self.w
+
+    def get_softmax(self, inputs):
+        return np.exp(self.predict(inputs))
 
 
 class LinearLayer():
@@ -66,8 +69,12 @@ class LinearLayer():
 
     def get_weights(self):
         return np.array([i.get_weights() for i in self.neurons])
+    
+    def get_softmax(self, inputs):
+        softmax_results = np.array([i.get_softmax(inputs) for i in self.neurons]).T
+        return softmax_results / np.sum(softmax_results, axis=1)[:, np.newaxis]
 
 
 X, y = create_data(100, 3)
-network_layer = LinearLayer(X.shape[1], 100)
-print(network_layer.forward_relu(X))
+network_layer = LinearLayer(X.shape[1], 2)
+print(network_layer.get_softmax(X))
