@@ -9,7 +9,7 @@ np.random.seed(0)
 
 def create_data(points, classes):
     X = np.empty((points * classes, 2))
-    y = np.empty((points*classes))
+    y = np.empty((points*classes), dtype=np.int32)
     for class_num in range(classes):
         r = np.linspace(0, 1, points, dtype=np.float64)
         t = np.linspace(class_num*4, (class_num + 1)*4, points,
@@ -20,7 +20,7 @@ def create_data(points, classes):
     return X, y
 
 
-class Neuron():
+class Neuron:
     def __init__(self, num_of_inputs, bias=None):
         self.w = 0.1 * np.random.randn(num_of_inputs)
         self.bias = 0  # np.random.randint(0, 10) if bias == None else bias
@@ -46,14 +46,14 @@ class Neuron():
         return self.w
 
 
-class LinearLayer():
+class LinearLayer:
     def __init__(self, num_of_inputs, amount_of_neurons):
         self.neurons = np.array([Neuron(num_of_inputs)
                                 for i in range(amount_of_neurons)], dtype=np.object0)
         self.result = None
 
-    def _test(self, x):
-        return x.forward()
+    def fit(self, X, y):
+        print(self.__loss(y, self.forward_softmax(X)))
 
     def forward_sigmoid(self, inputs: np.ndarray):
         self.result = np.array([i.forward(inputs)
@@ -75,11 +75,12 @@ class LinearLayer():
             np.sum(softmax_results, axis=1, keepdims=True)
         return self.result
 
+    def __loss(self, y, y_pred):
+        np.clip(y_pred, 1e-7, 1e7)
+        return np.mean(-np.log(y_pred[range(len(y_pred)), y-1]))
+
 
 X, y = create_data(100, 3)
 network_layer1 = LinearLayer(X.shape[1], 3)  # RELU
 network_layer2 = LinearLayer(3, 3)  # SoftMax
-network_layer1.forward_relu(X)
-network_layer2.forward_softmax(network_layer1.result)
-np.arg
-print(network_layer2.result[:5])
+network_layer2.fit(X, y)
