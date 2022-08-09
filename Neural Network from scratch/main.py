@@ -1,30 +1,46 @@
 import sys
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 
 np.random.seed(0)
 # np.set_printoptions(precision=70)
 
 
+def create_data(points, classes):
+    X = np.empty((points * classes, 2))
+    y = np.empty((points*classes))
+    for class_num in range(classes):
+        r = np.linspace(0, 1, points, dtype=np.float64)
+        t = np.linspace(class_num*4, (class_num + 1)*4, points,
+                        dtype=np.float64) + np.random.randn(points)*0.2
+        X[points*class_num:points *
+            (class_num+1)] = np.c_[r * np.sin(t*2.5), r*np.cos(t*2.5)]
+        y[points*class_num:points*(class_num+1)] = class_num
+    return X, y
+
+
 class Neuron():
     def __init__(self, num_of_inputs, bias=None):
-        self.w = np.random.randn(num_of_inputs)
-        self.bias = np.random.randint(0, 10) if bias == None else bias
+        self.w = 0.1 * np.random.randn(num_of_inputs)
+        self.bias = 0  # np.random.randint(0, 10) if bias == None else bias
+        self.scalar = None
 
     def _sigmoid(self, x):
         return 1 / (1 + np.exp(-1 * x))
+
     def _relu(self, x):
-        return max(0, x)
+        return np.where(0 >= x, 0, x)
 
     def get_scalar(self, inputs):
-        return np.dot(inputs, self.w) + self.bias
+        self.scalar = np.dot(inputs, self.w) + self.bias
+        return self.scalar
 
     def forward(self, inputs):
-        return self._sigmoid(np.sum(inputs * self.w) + self.bias)
+        return self._sigmoid(self.get_scalar(inputs))
 
     def forward_relu(self, inputs):
-        return self._relu(np.sum(inputs * self.w) + self.bias)
+        return self._relu(self.get_scalar(inputs))
 
     def get_weights(self):
         return self.w
@@ -41,17 +57,17 @@ class LinearLayer():
     def forward(self, inputs: np.ndarray):
         result = np.array([i.forward(inputs)
                           for i in self.neurons], dtype=np.float64)
+        return result
+
     def forward_relu(self, inputs: np.ndarray):
         result = np.array([i.forward_relu(inputs)
                           for i in self.neurons], dtype=np.float64)
         return result
+
     def get_weights(self):
         return np.array([i.get_weights() for i in self.neurons])
 
 
-inputs = np.array([1, 2, 3, 4])
-network_layer = LinearLayer(len(inputs), 10)
-print(network_layer.forward_relu(inputs))
-print(network_layer.get_weights())
-
-
+X, y = create_data(100, 3)
+network_layer = LinearLayer(X.shape[1], 100)
+print(network_layer.forward_relu(X))
