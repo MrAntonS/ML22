@@ -14,12 +14,17 @@ class Neuron():
 
     def _sigmoid(self, x):
         return 1 / (1 + np.exp(-1 * x))
+    def _relu(self, x):
+        return max(0, x)
 
     def get_scalar(self, inputs):
         return np.dot(inputs, self.w) + self.bias
 
     def forward(self, inputs):
         return self._sigmoid(np.sum(inputs * self.w) + self.bias)
+
+    def forward_relu(self, inputs):
+        return self._relu(np.sum(inputs * self.w) + self.bias)
 
     def get_weights(self):
         return self.w
@@ -36,6 +41,9 @@ class LinearLayer():
     def forward(self, inputs: np.ndarray):
         result = np.array([i.forward(inputs)
                           for i in self.neurons], dtype=np.float64)
+    def forward_relu(self, inputs: np.ndarray):
+        result = np.array([i.forward_relu(inputs)
+                          for i in self.neurons], dtype=np.float64)
         return result
     def get_weights(self):
         return np.array([i.get_weights() for i in self.neurons])
@@ -43,7 +51,7 @@ class LinearLayer():
 
 inputs = np.array([1, 2, 3, 4])
 network_layer = LinearLayer(len(inputs), 10)
-print(network_layer.forward(inputs))
+print(network_layer.forward_relu(inputs))
 print(network_layer.get_weights())
 
 
