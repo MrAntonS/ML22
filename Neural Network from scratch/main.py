@@ -35,7 +35,7 @@ class Neuron():
     def predict(self, inputs):
         self.scalar = np.dot(inputs, self.w) + self.bias
         return self.scalar
-    
+
     def forward(self, inputs):
         return self._sigmoid(self.predict(inputs))
 
@@ -45,37 +45,41 @@ class Neuron():
     def get_weights(self):
         return self.w
 
-    def get_softmax(self, inputs):
-        return np.exp(self.predict(inputs))
-
 
 class LinearLayer():
     def __init__(self, num_of_inputs, amount_of_neurons):
         self.neurons = np.array([Neuron(num_of_inputs)
                                 for i in range(amount_of_neurons)], dtype=np.object0)
+        self.result = None
 
     def _test(self, x):
         return x.forward()
 
-    def forward(self, inputs: np.ndarray):
-        result = np.array([i.forward(inputs)
-                          for i in self.neurons], dtype=np.float64)
-        return result
+    def forward_sigmoid(self, inputs: np.ndarray):
+        self.result = np.array([i.forward(inputs)
+                                for i in self.neurons], dtype=np.float64).T
+        return self.result
 
     def forward_relu(self, inputs: np.ndarray):
-        result = np.array([i.forward_relu(inputs)
-                          for i in self.neurons], dtype=np.float64)
-        return result
+        self.result = np.array([i.forward_relu(inputs)
+                                for i in self.neurons], dtype=np.float64).T
+        return self.result
 
     def get_weights(self):
         return np.array([i.get_weights() for i in self.neurons])
-    
-    def get_softmax(self, inputs):
-        softmax_results = np.array([i.get_softmax(inputs) for i in self.neurons]).T
-        return softmax_results / np.sum(softmax_results, axis=1)[:, np.newaxis]
+
+    def forward_softmax(self, inputs):
+        inputs = inputs - np.max(inputs, axis=1, keepdims=True)
+        softmax_results = np.exp(inputs)
+        self.result = softmax_results / \
+            np.sum(softmax_results, axis=1, keepdims=True)
+        return self.result
 
 
 X, y = create_data(100, 3)
-network_layer = LinearLayer(X.shape[1], 10)
-print(X[0])
-print(network_layer.get_softmax(X))
+network_layer1 = LinearLayer(X.shape[1], 3)  # RELU
+network_layer2 = LinearLayer(3, 3)  # SoftMax
+network_layer1.forward_relu(X)
+network_layer2.forward_softmax(network_layer1.result)
+np.arg
+print(network_layer2.result[:5])
