@@ -76,5 +76,6 @@ class LinearLayer():
 
 
 X, y = create_data(100, 3)
-network_layer = LinearLayer(X.shape[1], 2)
+network_layer = LinearLayer(X.shape[1], 10)
+print(X[0])
 print(network_layer.get_softmax(X))
