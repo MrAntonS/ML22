@@ -142,9 +142,9 @@ class LinearLayer:
         return self.weights
 
 
-X = np.array([[-1.0, -2.0]])
-y = np.array([1])
-network_layer1 = LinearLayer(2, 2, Sigmoid(), CCELoss())  # RELU
+X = np.array([[-1.0, -2.0],[-1.0, -2.0],])
+y = np.array([1, 0])
+network_layer1 = LinearLayer(2, 10, Sigmoid(), CCELoss())  # RELU
 network_layer1.forward(X)
 print(network_layer1.grad(network_layer1.raw_predict, network_layer1.activation.get_derivative(network_layer1.raw_predict).T @ network_layer1.loss_func.get_derivative(y, network_layer1.result)))
 
