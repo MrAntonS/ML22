@@ -6,18 +6,18 @@ import matplotlib.pyplot as plt
 np.random.seed(0)
 np.set_printoptions(precision=70)
 
-
-def create_data(points, classes):
-    X = np.empty((points * classes, 2))
-    y = np.empty((points*classes), dtype=np.int32)
-    for class_num in range(classes):
-        r = np.linspace(0, 1, points, dtype=np.float64)
-        t = np.linspace(class_num*4, (class_num + 1)*4, points,
-                        dtype=np.float64) + np.random.randn(points)*0.2
-        X[points*class_num:points *
-            (class_num+1)] = np.c_[r * np.sin(t*2.5), r*np.cos(t*2.5)]
-        y[points*class_num:points*(class_num+1)] = class_num
-    return X, y
+class Data_Creator:
+    def create_data_spiral(self, points, classes):
+        X = np.empty((points * classes, 2))
+        y = np.empty((points*classes), dtype=np.int32)
+        for class_num in range(classes):
+            r = np.linspace(0, 1, points, dtype=np.float64)
+            t = np.linspace(class_num*4, (class_num + 1)*4, points,
+                            dtype=np.float64) + np.random.randn(points)*0.2
+            X[points*class_num:points *
+                (class_num+1)] = np.c_[r * np.sin(t*2.5), r*np.cos(t*2.5)]
+            y[points*class_num:points*(class_num+1)] = class_num
+        return X, y
 
 
 '''
