@@ -1,5 +1,7 @@
 from asyncio.constants import SENDFILE_FALLBACK_READBUFFER_SIZE
+from operator import ne
 from os import access
+from pydoc import describe
 import sys
 from turtle import forward
 import numpy as np
@@ -57,9 +59,15 @@ class CCELoss(LossFunction):
     def get_loss(self, y, y_pred):
         np.clip(y_pred, 1e-7, 1e7)
         if len(y.shape) == 1:
-            return np.mean(-np.log(y_pred[range(len(y_pred)), y]))
+            self.result = -np.log(y_pred[range(len(y_pred)), y])
         elif len(y.shape) == 2:
-            return np.mean(-np.log(np.sum(y_pred * y, axis=1)))
+            self.result = -np.log(np.sum(y_pred * y, axis=1))
+        return self.result
+
+    def get_derivative(self, y, y_pred):
+        self.derivative = y_pred
+        self.derivative[range(len(y_pred)), y] -= 1
+        return -self.derivative
 
 
 class ActivationFunction:
@@ -68,15 +76,29 @@ class ActivationFunction:
 
 
 class Sigmoid(ActivationFunction):
+    def __init__(self):
+        self.f = lambda x: 1 / (1 + np.exp(-x))
+
     def forward(self, X):
-        self.results = 1 / (1 + np.exp(X))
+        self.results = self.f(X)
         return self.results
+
+    def get_derivative(self, X):
+        self.derivative = X * (1 - X)
+        return self.derivative
 
 
 class Relu(ActivationFunction):
+    def __init__(self):
+        self.f = lambda x: np.where(0 >= x, 0, x)
+
     def forward(self, X):
-        self.results = np.where(0 >= X, 0, X)
+        self.results = self.f(X)
         return self.results
+
+    def get_derivative(self, X):
+        self.derivative = np.where(0 >= X, 0, 1)
+        return self.derivative
 
 
 class Softmax(ActivationFunction):
@@ -99,6 +121,12 @@ class LinearLayer:
     def fit(self, X, y):
         pass
 
+    def grad(self, gradoutputs, inputs):
+        self.gradinput = np.dot(gradoutputs, self.weights)
+        self.gradW = np.dot(gradoutputs, inputs)
+        self.gradB = np.sum(gradoutputs, axis=0)
+        return self.gradinput
+
     def predict(self, X):
         return np.dot(X, self.weights.T) + self.bias
 
@@ -113,11 +141,10 @@ class LinearLayer:
         return self.weights
 
 
-X, y = create_data(100, 3)
-network_layer1 = LinearLayer(X.shape[1], 3, Sigmoid(), CCELoss())  # RELU
-network_layer2 = LinearLayer(3, 3, Softmax(), CCELoss())  # RELU
-network_layer3 = LinearLayer(3, 3, Softmax(), CCELoss())  # RELU
+X = np.array([[-1.0, -2.0], [-1.0, -1.0]])
+y = np.array([1, 0])
+network_layer1 = LinearLayer(2, 3, Relu(), CCELoss())  # RELU
 network_layer1.forward(X)
-network_layer2.forward(network_layer1.result)
-network_layer3.forward(network_layer2.result)
-print(network_layer3.get_loss(y))
+network_layer1.loss_func.get_loss(y, network_layer1.result)
+print(network_layer1.grad(network_layer1.result, network_layer1.activation.get_derivative(network_layer1.result).T@network_layer1.loss_func.get_derivative(y, network_layer1.result)))
+
