@@ -55,9 +55,15 @@ class LossFunction:
         self.result = None
         self.derivative = None
 
+    def forward(self, y, y_pred):
+        pass
+
+    def backward(self, y, y_pred):
+        pass
+
 
 class CCELoss(LossFunction):
-    def get_loss(self, y, y_pred):
+    def forward(self, y, y_pred):
         np.clip(y_pred, 1e-7, 1e7)
         if len(y.shape) == 1:
             self.result = -np.log(y_pred[range(len(y_pred)), y])
@@ -65,16 +71,28 @@ class CCELoss(LossFunction):
             self.result = -np.log(np.sum(y_pred * y, axis=1))
         return self.result
 
-    def get_derivative(self, y, y_pred):
+    def backward(self, y, y_pred):
         self.derivative = np.tile(self.result, (y_pred.shape[1], 1)).T
-        self.derivative[range(len(y_pred)), y] = 1 / y_pred[range(len(y_pred)), y]
+        self.derivative[range(len(y_pred)), y] = 1 / \
+            y_pred[range(len(y_pred)), y]
         return -self.derivative
+
+
+'''
+Activation Functions
+'''
 
 
 class ActivationFunction:
     def __init__(self):
         self.results = None
         self.f = None
+
+    def forward(self, input):
+        pass
+
+    def backward(self, input):
+        pass
 
 
 class Sigmoid(ActivationFunction):
@@ -85,7 +103,7 @@ class Sigmoid(ActivationFunction):
         self.results = self.f(X)
         return self.results
 
-    def get_derivative(self, X):
+    def backward(self, X):
         self.derivative = X * (1 - X)
         return self.derivative
 
@@ -98,7 +116,7 @@ class Relu(ActivationFunction):
         self.results = self.f(X)
         return self.results
 
-    def get_derivative(self, X):
+    def backward(self, X):
         self.derivative = np.where(0 >= X, 0, 1)
         return self.derivative
 
@@ -113,12 +131,8 @@ class Softmax(ActivationFunction):
 
 class LinearLayer:
     def __init__(self, num_of_inputs, amount_of_neurons, activation: ActivationFunction, loss_func: LossFunction):
-        # self.neurons = np.array([Neuron(num_of_inputs)
-        #                         for i in range(amount_of_neurons)], dtype=np.object0)
         self.weights = np.random.randn(amount_of_neurons, num_of_inputs)
         self.bias = np.ones(amount_of_neurons)
-        self.activation = activation
-        self.loss_func = loss_func
 
     def fit(self, X, y):
         pass
@@ -129,40 +143,9 @@ class LinearLayer:
         self.gradB = np.sum(gradoutputs, axis=0)
         return self.gradinput
 
-    def predict(self, X):
+    def forward(self, X):
         self.raw_predict = np.dot(X, self.weights.T) + self.bias
         return self.raw_predict
 
-    def forward(self, X):
-        self.result = self.activation.forward(self.predict(X))
-        return self.result
-
-    def get_loss(self, y):
-        return self.loss_func.get_loss(y, self.result)
-
     def get_weights(self):
         return self.weights
-
-
-X,y = create_data(2, 2)
-print(X, y)
-network_layer1 = LinearLayer(2, 2, Sigmoid(), CCELoss())
-network_layer1.weights = np.array([[1, 1], [2, 2]])
-network_layer1.bias = np.array([1, 0])
-for i in range(100):
-    print(network_layer1.forward(X))
-    print(network_layer1.get_loss(y))
-    loss_der = network_layer1.loss_func.get_derivative(y, network_layer1.result)
-    sigm_der = network_layer1.activation.get_derivative(network_layer1.raw_predict)
-    output = -1 * sigm_der * loss_der
-    func_grad = network_layer1.grad(X, output)
-    network_layer2 = LinearLayer(2, 2, Softmax(), CCELoss())
-    network_layer1.weights = network_layer1.weights - 0.001 * network_layer1.gradW
-    network_layer1.bias = network_layer1.bias - 0.001 * network_layer1.gradB
-    network_layer2.weights = network_layer1.weights
-    network_layer2.bias = network_layer1.bias
-    print(network_layer2.forward(X))
-    print(network_layer2.get_loss(y))
-
-# print(network_layer1.grad(network_layer1.raw_predict, network_layer1.activation.get_derivative(
-#     network_layer1.raw_predict).T @ network_layer1.loss_func.get_derivative(y, network_layer1.result)))
