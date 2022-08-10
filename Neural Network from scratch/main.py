@@ -53,7 +53,7 @@ def create_data(points, classes):
 class LossFunction:
     def __init__(self):
         self.result = None
-
+        self.derivative = None
 
 class CCELoss(LossFunction):
     def get_loss(self, y, y_pred):
@@ -65,7 +65,7 @@ class CCELoss(LossFunction):
         return self.result
 
     def get_derivative(self, y, y_pred):
-        self.derivative = y_pred
+        self.derivative = y_pred.copy()
         self.derivative[range(len(y_pred)), y] -= 1
         return -self.derivative
 
@@ -121,14 +121,15 @@ class LinearLayer:
     def fit(self, X, y):
         pass
 
-    def grad(self, gradoutputs, inputs):
+    def grad(self, inputs, gradoutputs):
         self.gradinput = np.dot(gradoutputs, self.weights)
-        self.gradW = np.dot(gradoutputs, inputs)
+        self.gradW = np.dot(gradoutputs, inputs.T)
         self.gradB = np.sum(gradoutputs, axis=0)
         return self.gradinput
 
     def predict(self, X):
-        return np.dot(X, self.weights.T) + self.bias
+        self.raw_predict = np.dot(X, self.weights.T) + self.bias
+        return self.raw_predict
 
     def forward(self, X):
         self.result = self.activation.forward(self.predict(X))
@@ -141,10 +142,9 @@ class LinearLayer:
         return self.weights
 
 
-X = np.array([[-1.0, -2.0], [-1.0, -1.0]])
-y = np.array([1, 0])
-network_layer1 = LinearLayer(2, 3, Relu(), CCELoss())  # RELU
+X = np.array([[-1.0, -2.0]])
+y = np.array([1])
+network_layer1 = LinearLayer(2, 2, Sigmoid(), CCELoss())  # RELU
 network_layer1.forward(X)
-network_layer1.loss_func.get_loss(y, network_layer1.result)
-print(network_layer1.grad(network_layer1.result, network_layer1.activation.get_derivative(network_layer1.result).T@network_layer1.loss_func.get_derivative(y, network_layer1.result)))
+print(network_layer1.grad(network_layer1.raw_predict, network_layer1.activation.get_derivative(network_layer1.raw_predict).T @ network_layer1.loss_func.get_derivative(y, network_layer1.result)))
 
