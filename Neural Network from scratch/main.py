@@ -20,6 +20,11 @@ def create_data(points, classes):
     return X, y
 
 
+'''
+Loss Functions
+'''
+
+
 class LossFunction:
     def __init__(self):
         self.result = None
@@ -97,6 +102,11 @@ class Softmax(ActivationFunction):
         exponent = np.exp(X)
         self.results = exponent / np.sum(exponent, axis=1, keepdims=True)
         return self.results
+
+
+'''
+Layers
+'''
 
 
 class LinearLayer:
