@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 np.random.seed(0)
-# np.set_printoptions(precision=70)
+np.set_printoptions(precision=70)
 
 
 def create_data(points, classes):
@@ -124,7 +124,7 @@ class LinearLayer:
         pass
 
     def grad(self, inputs, gradoutputs):
-        self.gradinput = np.dot(gradoutputs, self.weights)
+        self.gradinput = np.dot(gradoutputs, self.weights.T)
         self.gradW = np.dot(gradoutputs, inputs.T)
         self.gradB = np.sum(gradoutputs, axis=0)
         return self.gradinput
@@ -144,15 +144,25 @@ class LinearLayer:
         return self.weights
 
 
-X = np.array([[-1.0, -2.0]])
-y = np.array([1,])
+X,y = create_data(2, 2)
+print(X, y)
 network_layer1 = LinearLayer(2, 2, Sigmoid(), CCELoss())
 network_layer1.weights = np.array([[1, 1], [2, 2]])
 network_layer1.bias = np.array([1, 0])
-network_layer1.forward(X)
-network_layer1.get_loss(y)
-loss_der = network_layer1.loss_func.get_derivative(y, network_layer1.result)
-sigm_der = network_layer1.activation.get_derivative(X)
-print(sigm_der)
+for i in range(100):
+    print(network_layer1.forward(X))
+    print(network_layer1.get_loss(y))
+    loss_der = network_layer1.loss_func.get_derivative(y, network_layer1.result)
+    sigm_der = network_layer1.activation.get_derivative(network_layer1.raw_predict)
+    output = -1 * sigm_der * loss_der
+    func_grad = network_layer1.grad(X, output)
+    network_layer2 = LinearLayer(2, 2, Softmax(), CCELoss())
+    network_layer1.weights = network_layer1.weights - 0.001 * network_layer1.gradW
+    network_layer1.bias = network_layer1.bias - 0.001 * network_layer1.gradB
+    network_layer2.weights = network_layer1.weights
+    network_layer2.bias = network_layer1.bias
+    print(network_layer2.forward(X))
+    print(network_layer2.get_loss(y))
+
 # print(network_layer1.grad(network_layer1.raw_predict, network_layer1.activation.get_derivative(
 #     network_layer1.raw_predict).T @ network_layer1.loss_func.get_derivative(y, network_layer1.result)))
