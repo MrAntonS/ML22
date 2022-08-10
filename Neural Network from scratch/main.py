@@ -25,31 +25,6 @@ def create_data(points, classes):
     return X, y
 
 
-# class Neuron:
-#     def __init__(self, num_of_inputs, bias=None):
-#         self.w = 0.1 * np.random.randn(num_of_inputs)
-#         self.bias = 0  # np.random.randint(0, 10) if bias == None else bias
-#         self.scalar = None
-
-#     def _sigmoid(self, x):
-#         return 1 / (1 + np.exp(-1 * x))
-
-#     def _relu(self, x):
-#         return np.where(0 >= x, 0, x)
-
-#     def predict(self, inputs):
-#         self.scalar = np.dot(inputs, self.w) + self.bias
-#         return self.scalar
-
-#     def forward(self, inputs):
-#         return self._sigmoid(self.predict(inputs))
-
-#     def forward_relu(self, inputs):
-#         return self._relu(self.predict(inputs))
-
-#     def get_weights(self):
-#         return self.w
-
 class LossFunction:
     def __init__(self):
         self.result = None
