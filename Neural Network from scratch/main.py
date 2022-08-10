@@ -55,6 +55,7 @@ class LossFunction:
         self.result = None
         self.derivative = None
 
+
 class CCELoss(LossFunction):
     def get_loss(self, y, y_pred):
         np.clip(y_pred, 1e-7, 1e7)
@@ -65,14 +66,15 @@ class CCELoss(LossFunction):
         return self.result
 
     def get_derivative(self, y, y_pred):
-        self.derivative = y_pred.copy()
-        self.derivative[range(len(y_pred)), y] -= 1
+        self.derivative = np.tile(self.result, (y_pred.shape[1], 1)).T
+        self.derivative[range(len(y_pred)), y] = 1 / y_pred[range(len(y_pred)), y]
         return -self.derivative
 
 
 class ActivationFunction:
     def __init__(self):
         self.results = None
+        self.f = None
 
 
 class Sigmoid(ActivationFunction):
@@ -142,9 +144,15 @@ class LinearLayer:
         return self.weights
 
 
-X = np.array([[-1.0, -2.0],[-1.0, -2.0],])
-y = np.array([1, 0])
-network_layer1 = LinearLayer(2, 10, Sigmoid(), CCELoss())  # RELU
+X = np.array([[-1.0, -2.0]])
+y = np.array([1,])
+network_layer1 = LinearLayer(2, 2, Sigmoid(), CCELoss())
+network_layer1.weights = np.array([[1, 1], [2, 2]])
+network_layer1.bias = np.array([1, 0])
 network_layer1.forward(X)
-print(network_layer1.grad(network_layer1.raw_predict, network_layer1.activation.get_derivative(network_layer1.raw_predict).T @ network_layer1.loss_func.get_derivative(y, network_layer1.result)))
-
+network_layer1.get_loss(y)
+loss_der = network_layer1.loss_func.get_derivative(y, network_layer1.result)
+sigm_der = network_layer1.activation.get_derivative(X)
+print(sigm_der)
+# print(network_layer1.grad(network_layer1.raw_predict, network_layer1.activation.get_derivative(
+#     network_layer1.raw_predict).T @ network_layer1.loss_func.get_derivative(y, network_layer1.result)))
