@@ -50,7 +50,7 @@ class CCELoss(LossFunction):
         self.derivative = np.tile(self.result, (y_pred.shape[1], 1)).T
         self.derivative[range(len(y_pred)), y] = 1 / \
             y_pred[range(len(y_pred)), y]
-        return -self.derivative
+        return self.derivative
 
 
 '''
