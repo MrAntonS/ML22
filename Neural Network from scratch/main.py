@@ -60,8 +60,8 @@ class MeanSquared(LossFunction):
         self.results = (y_pred - y) ** 2
         return self.results
 
-    def backward(self, y, y_pred):
-        self.derivative = 2 * (y_pred - self.inputs())
+    def backward(self, y_pred):
+        self.derivative = 2 * (y_pred - self.inputs)
         return self.derivative
 
 
