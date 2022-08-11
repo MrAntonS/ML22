@@ -1,3 +1,4 @@
+from re import L
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -62,7 +63,7 @@ class MeanSquared(LossFunction):
         return self.results
 
     def backward(self, y_pred):
-        self.derivative = 2 * (y_pred - self.inputs)
+        self.derivative = -2 * (self.inputs - y_pred)
         return self.derivative
 
 
@@ -106,7 +107,7 @@ class Relu(ActivationFunction):
         return self.results
 
     def backward(self, inputs):
-        self.derivative = np.where(0 >= inputs, 0, 1)
+        self.derivative = np.where(0 > inputs, 0, 1)
         return self.derivative
 
 
@@ -149,34 +150,55 @@ class LinearLayer:
     def get_weights(self):
         return self.weights
 
-
-X = np.array([[-1, 2]])
-y = np.array([0])
-Linear_layer = LinearLayer(2, 2)
+def f(X):
+    return 3 * X + 3
+X = np.linspace(1, 2, 1000).reshape(-1, 1)
+y = f(X)
+Linear_layer = LinearLayer(1, 1)
 ActivationLayer = Relu()
-Loss = MeanSquared()
+LossLayer = MeanSquared()
+Linear_layer.weights = np.array([[0.1]])
+Linear_layer.bias[0] = 0
+loss = []
 
-for _ in range(1000):
+for _ in range(10000):
+    # print("Inputs")
+    # print(f"{X = }")
+    # print(f"{y = }")
+    # print("Forwarding")
     Linear_layer.forward(X)
-    ActivationLayer.forward(Linear_layer.results)
-    Loss.forward(y, ActivationLayer.results)
-    print(Loss.results)
-    # print(Loss.backward(ActivationLayer.results))
-    # print(ActivationLayer.backward(Linear_layer.results))
-    gradout = (Loss.backward(ActivationLayer.results) *
-               ActivationLayer.backward(Linear_layer.results)).T
-    # print(gradout)
-    gradW = gradout @ Linear_layer.inputs
-    gradInput = Linear_layer.weights.T @ gradout
-    gradB = np.sum(gradout, axis=1)
+    # print(f"{Linear_layer.results = }")
+    # print(f"{ActivationLayer.forward(Linear_layer.results) = }")
+    # print(f"{LossLayer.forward(y, ActivationLayer.results) = }")
+    LossLayer.forward(y, Linear_layer.results)
+    # print(f"{LossLayer.results = }")
+    # print("Backwarding")
+    # print(f"{LossLayer.backward(ActivationLayer.results) = }")
+    LossLayer.backward(Linear_layer.results)
+    # print(f"{LossLayer.derivative = }")
+    # print(f"{ActivationLayer.backward(Linear_layer.results) = }")
+    # gradout = (LossLayer.backward(ActivationLayer.results) *
+    #            ActivationLayer.backward(Linear_layer.results)).T
+    gradout = (LossLayer.derivative)
+    # print(f"{gradout = }")
+    loss.append(LossLayer.results)
+    gradInput = gradout * Linear_layer.weights
+    gradW = np.mean(gradout * Linear_layer.inputs)
+    gradB = np.mean(gradout)
     # print(f"{gradW=}")
     # print(f"{gradB=}")
     # print(f"{gradInput=}")
     # print(f"{Linear_layer.bias=}")
     Linear_layer.weights = Linear_layer.weights - 0.01 * gradW
-    Linear_layer.bias = Linear_layer.bias - gradB
+    Linear_layer.bias = Linear_layer.bias - 0.01 * gradB
     # print(f"{Linear_layer.bias=}")
     # print("_"*30)
-Linear_layer.forward(X)
-Sigmoid_layer = Relu()
-print(Sigmoid_layer.forward(Linear_layer.results))
+print(LossLayer.results)
+# print(Linear_layer.weights)
+# print(Linear_layer.bias)
+plt.scatter(X, y, c='g')
+# plt.plot(np.linspace(1,100, 100), loss)
+plt.plot(X, y)
+plt.plot(X, Linear_layer.results)
+plt.show()
+
