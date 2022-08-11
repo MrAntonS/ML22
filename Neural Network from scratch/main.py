@@ -102,6 +102,10 @@ class Softmax(ActivationFunction):
         self.results = exponent / np.sum(exponent, axis=1, keepdims=True)
         return self.results
 
+    def backward(self, inputs):
+        self.derivative = self.forward(inputs) * (1 - self.forward(inputs))
+        return self.derivative
+
 
 '''
 Layers
@@ -131,25 +135,29 @@ class LinearLayer:
         return self.weights
 
 
-X = np.array([[-1, -2]])
-y = np.array([1])
+X = np.array([[-1, -2], ])
+y = np.array([1, ])
 Linear_layer = LinearLayer(2, 2)
-Linear_layer.weights = np.array([[1,1], [2, 2]])
+Linear_layer.weights = np.array([[1, 1], [2, 2]])
 for _ in range(100):
     Linear_layer.forward(X)
-    Sigmoid_layer = Sigmoid()
-    Sigmoid_layer.forward(Linear_layer.results)
+    ActivationLayer = Softmax()
+    ActivationLayer.forward(Linear_layer.results)
     Loss = CCELoss()
-    Loss.forward(y, Sigmoid_layer.results)
+    Loss.forward(y, ActivationLayer.results)
     # print(Linear_layer.weights.shape)
     # print(Linear_layer.bias.shape)
     # print(Loss.results)
     # print(Loss.backward(Sigmoid_layer.results))
     # print(Sigmoid_layer.backward(Linear_layer.results))
-    gradout = (Loss.backward(Sigmoid_layer.results) * Sigmoid_layer.backward(Linear_layer.results)).T
+    gradout = (Loss.backward(ActivationLayer.results) *
+               ActivationLayer.backward(Linear_layer.results)).T
     gradW = gradout @ Linear_layer.inputs
     gradInput = Linear_layer.weights.T @ gradout
     gradB = gradout
     Linear_layer.weights = Linear_layer.weights - 0.01 * gradW
     Linear_layer.bias = Linear_layer.bias - gradB.T
     print(Loss.results)
+print(Linear_layer.forward(X))
+Sigmoid_layer = Softmax()
+print(Sigmoid_layer.forward(Linear_layer.results))
