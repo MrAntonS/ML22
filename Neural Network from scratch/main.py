@@ -114,9 +114,6 @@ class LinearLayer:
         self.weights = np.random.randn(amount_of_neurons, num_of_inputs)
         self.bias = np.ones(amount_of_neurons)
 
-    def fit(self, X, y):
-        pass
-
     def grad(self, inputs, gradoutputs):
         self.gradinput = np.dot(gradoutputs, self.weights.T)
         self.gradW = np.dot(gradoutputs, inputs.T)
@@ -126,6 +123,7 @@ class LinearLayer:
     def forward(self, X):
         self.raw_predict = np.dot(X, self.weights.T) + self.bias
         return self.raw_predict
-
+    def backward(self, inputs, gradoutputs):
+        pass
     def get_weights(self):
         return self.weights
