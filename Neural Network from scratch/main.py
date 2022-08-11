@@ -61,6 +61,7 @@ class ActivationFunction:
     def __init__(self):
         self.results = None
         self.f = None
+        self.derivative = None
 
     def forward(self, inputs):
         pass
