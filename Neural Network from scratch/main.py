@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 np.random.seed(1)
-# np.set_printoptions(precision=70)
+np.set_printoptions(precision=70)
 
 
 class Data_Creator:
@@ -62,6 +62,8 @@ class MeanSquared(LossFunction):
         return self.results
 
     def backward(self, y_pred):
+        # print(f"{self.inputs = }")
+        # print(f"{y_pred = }")
         self.derivative = -2 * (self.inputs - y_pred)
         return self.derivative
 
@@ -97,7 +99,9 @@ class Sigmoid(ActivationFunction):
     def backward(self, gradoutputs):
         exp = self.f(self.inputs)
         self.derivative =  exp * (1 - exp)
-        return self.derivative
+        self.derivative = self.derivative * gradoutputs
+        # print(f"{self.derivative=}")
+        return self.derivative 
 
 
 class Relu(ActivationFunction):
@@ -138,15 +142,15 @@ class LinearLayer:
         self.weights = np.random.randn(amount_of_neurons, num_of_inputs)
         self.bias = np.zeros(amount_of_neurons)
         self.results = None
-        self.gradInput = None
+        self.derivative = None
         self.inputs = None
-        self.lr = np.float64(0.001) if lr == None else lr
+        self.lr = np.float64(0.0001) if lr == None else lr
 
     def grad(self, gradoutputs):
         # print(f"{self.weights = }")
         # print(f"{gradoutputs = }")
         # print(f"{self.inputs = }")
-        self.gradInput = gradoutputs @ self.weights
+        self.derivative = gradoutputs @ self.weights
         gradW = (self.inputs.T @ gradoutputs) / len(self.inputs)
         gradB = np.sum(gradoutputs, axis=0) / len(self.inputs)
         return gradW.T, gradB
@@ -163,27 +167,30 @@ class LinearLayer:
         lr = self.lr / np.sqrt(iteration)
         self.weights = self.weights - lr * gradW
         self.bias = self.bias - lr * gradB
-        return self.gradInput
+        return self.derivative
 
     def get_weights(self):
         return self.weights
 
 
 def f(X):
+    return np.sin(X)
+def f1(X):
     return X ** 2 + 2
 
-
-X = np.linspace(-10, 10, 1000, dtype=np.float64).reshape(-1, 1)
-y = f(X).T + np.random.randn(1000) * 1
-y = y.T
-Linear_layer = LinearLayer(1, 100)
-Linear_layer2 = LinearLayer(100, 1)
+# X = np.linspace(0, 7, 10, dtype=np.float64).reshape(-1, 1)
+# y = f1(X).T #+ np.random.randn(1000) * 1
+# y = y.T
+X = np.array([[-1], [0], [1], [2]])
+y = np.array([[0, 1, 0, 1,]]).T
+Linear_layer = LinearLayer(1, 8)
+Linear_layer2 = LinearLayer(8, 1)
 ActivationLayer = Relu()
 ActivationLayer2 = Relu()
 LossLayer = MeanSquared()
 loss = []
 i = 0
-while True:
+for i in range(300000):
     # print("Inputs")
     # print(f"{X = }")
     # print(f"{y = }")
@@ -194,33 +201,33 @@ while True:
     ActivationLayer.forward(Linear_layer.results)
     # print(f"{ActivationLayer.results = }")
     Linear_layer2.forward(ActivationLayer.results)
-    ActivationLayer2.forward(Linear_layer2.results)
     # print(f"{Linear_layer2.results = }")
     # print(f"{Linear_layer2.weights = }")
+    ActivationLayer2.forward(Linear_layer2.results)
+    # print(f"{ActivationLayer2.results = }")
     LossLayer.forward(y, ActivationLayer2.results)
     # print(f"{LossLayer.results = }")
     # print("=" * 40,"\nBackwarding")
     LossLayer.backward(ActivationLayer2.results)
-    ActivationLayer2.backward(LossLayer.derivative)
     # print(f"{LossLayer.derivative = }")
+    ActivationLayer2.backward(LossLayer.derivative)
+    # print(f"{ActivationLayer2.inputs = }")
+    # print(f"{ActivationLayer2.derivative = }")
     Linear_layer2.backward(LossLayer.derivative)
     # print(f"{Linear_layer2.gradInput = }")
-    ActivationLayer.backward(Linear_layer2.gradInput)
+    ActivationLayer.backward(Linear_layer2.derivative)
     # print(f"{ActivationLayer.derivative = }")
     Linear_layer.backward(ActivationLayer.derivative)
     # print(f"{Linear_layer.gradInput = }")
     # print(f"{Linear_layer.bias = }")
     # print(f"{Linear_layer.weights = }")
     loss.append(LossLayer.results)
-    if LossLayer.results < 0.5 or i > 3 * 10**4:
-        break
-    i += 1
+print(f"{LossLayer.results = }")
     # print("_"*30)
-print(f"{LossLayer.results = }, {i =}")
 # # print(Linear_layer.weights)
 # # # print(Linear_layer.bias)
 plt.scatter(X, y, c='g')
 # plt.plot(np.linspace(1,100, 100), loss)
-plt.plot(X, f(X))
-plt.plot(X, Linear_layer2.results)
+# plt.plot(X, f1(X))
+plt.plot(X, ActivationLayer2.results)
 plt.show()
