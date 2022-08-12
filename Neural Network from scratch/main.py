@@ -59,6 +59,9 @@ class CCELoss(LossFunction):
 class MeanSquared(LossFunction):
     def forward(self, y, y_pred):
         self.inputs = y.copy()
+        print(f"{(y_pred - y) ** 2 = }")
+        print(f"{y_pred = }")
+        print(f"{y = }")
         self.results = np.mean((y_pred - y) ** 2)
         return self.results
 
@@ -154,9 +157,10 @@ class LinearLayer:
         print(f"{self.weights = }")
         print(f"{gradoutputs = }")
         print(f"{self.inputs = }")
+        print(f"{self.inputs.T @ gradoutputs = }")
         self.derivative = gradoutputs @ self.weights
         gradW = np.mean(self.inputs.T @ gradoutputs, axis=1)
-        gradB = np.sum(gradoutputs, axis=0) 
+        gradB = np.mean(gradoutputs, axis=0) 
         return gradW.T, gradB
 
     def forward(self, inputs):
@@ -188,9 +192,9 @@ y = y.T
 # X = np.array([[-1], [0], [1]])
 # y = np.array([[0, 1, 0]]).T
 fig = plt.figure()
-Linear_layer = LinearLayer(1, 1)
-Linear_layer2 = LinearLayer(1, 1)
-Linear_layer3 = LinearLayer(1, 1)
+Linear_layer = LinearLayer(1, 2)
+Linear_layer2 = LinearLayer(2, 2)
+Linear_layer3 = LinearLayer(2, 1)
 ActivationLayer = Relu()
 ActivationLayer2 = Relu()
 LossLayer = MeanSquared()
