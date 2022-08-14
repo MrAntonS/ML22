@@ -14,3 +14,4 @@ Machine Learning cource (Done)
 Now Deep Learning
 I spent 2 - 3 days to implement a backprop, and finnaly got it right!!! I was so happy to see Loss function go down almost every time omg XD
 I couldnt make any commits today but i dont want any new holes
+Just in case
