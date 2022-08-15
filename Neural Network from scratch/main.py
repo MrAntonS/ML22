@@ -151,7 +151,7 @@ class LinearLayer:
         self.results = None
         self.derivative = None
         self.inputs = None
-        self.lr = np.float64(0.1) if lr == None else lr
+        self.lr = np.float64(0.005) if lr == None else lr
 
     def grad(self, gradoutputs):
         print(f"{self.weights = }")
@@ -240,7 +240,7 @@ def anim(i):
     plt.plot(X, y)
     plt.plot(X, ActivationLayer2.results)
     print("_"*30)
-ani = FuncAnimation(fig, anim, frames=30000, interval=300, repeat=False)
+ani = FuncAnimation(fig, anim, frames=30000, interval=0, repeat=False)
 plt.show()
 # print(Linear_layer.weights)
 # # print(Linear_layer.bias)
