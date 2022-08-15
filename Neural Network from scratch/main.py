@@ -113,7 +113,7 @@ class Sigmoid(ActivationFunction):
 
 class Relu(ActivationFunction):
     def __init__(self):
-        self.f = lambda x: np.where(0 >= x, 0, x)
+        self.f = lambda x: np.where(0 >= x, 0.1 * x, x)
 
     def forward(self, inputs):
         self.inputs = inputs.copy()
@@ -121,7 +121,7 @@ class Relu(ActivationFunction):
         return self.results
 
     def backward(self, gradoutputs):
-        self.derivative = np.where(0 >= self.inputs, 0, 1)
+        self.derivative = np.where(0 >= self.inputs, 0.1, 1)
         print(f"{self.derivative=}")
         self.derivative = self.derivative * gradoutputs
         return self.derivative
@@ -186,11 +186,11 @@ def f(X):
 def f1(X):
     return X ** 2 + 2
 
-# X = np.linspace(-7, 7, 3, dtype=np.float64).reshape(-1, 1)
-# y = f(X).T + np.random.randn(3) * 0.1
-# y = y.T
-X = np.array([[-1], [0], [1]])
-y = np.array([[0, 1, 0]]).T
+X = np.linspace(-7, 7, 3, dtype=np.float64).reshape(-1, 1)
+y = f(X).T + np.random.randn(3) * 0.1
+y = y.T
+# X = np.array([[-1], [0], [1]])
+# y = np.array([[0, 1, 0]]).T
 fig = plt.figure()
 Linear_layer = LinearLayer(1, 2)
 Linear_layer2 = LinearLayer(2, 1)
