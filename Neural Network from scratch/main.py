@@ -62,7 +62,7 @@ class MeanSquared(LossFunction):
         print(f"{(y_pred - y) ** 2 = }")
         print(f"{y_pred = }")
         print(f"{y = }")
-        self.results = np.mean((y_pred - y) ** 2)
+        self.results = np.sum((y_pred - y) ** 2)
         return self.results
 
     def backward(self, y_pred):
@@ -151,7 +151,7 @@ class LinearLayer:
         self.results = None
         self.derivative = None
         self.inputs = None
-        self.lr = np.float64(0.00000041) if lr == None else lr
+        self.lr = np.float64(0.1) if lr == None else lr
 
     def grad(self, gradoutputs):
         print(f"{self.weights = }")
@@ -186,15 +186,14 @@ def f(X):
 def f1(X):
     return X ** 2 + 2
 
-X = np.linspace(-7, 7, 3, dtype=np.float64).reshape(-1, 1)
-y = f(X).T + np.random.randn(3) * 0.1
-y = y.T
-# X = np.array([[-1], [0], [1]])
-# y = np.array([[0, 1, 0]]).T
+# X = np.linspace(-7, 7, 3, dtype=np.float64).reshape(-1, 1)
+# y = f(X).T + np.random.randn(3) * 0.1
+# y = y.T
+X = np.array([[-1], [0], [1]])
+y = np.array([[0, 1, 0]]).T
 fig = plt.figure()
 Linear_layer = LinearLayer(1, 2)
-Linear_layer2 = LinearLayer(2, 2)
-Linear_layer3 = LinearLayer(2, 1)
+Linear_layer2 = LinearLayer(2, 1)
 ActivationLayer = Relu()
 ActivationLayer2 = Relu()
 LossLayer = MeanSquared()
@@ -214,25 +213,21 @@ def anim(i):
     ActivationLayer.forward(Linear_layer.results)
     Linear_layer2.forward(ActivationLayer.results)
     ActivationLayer2.forward(Linear_layer2.results)
-    Linear_layer3.forward(ActivationLayer2.results)
-    LossLayer.forward(y, Linear_layer3.results)
+    LossLayer.forward(y, ActivationLayer2.results)
     print(f"{Linear_layer.results = }")
     print(f"{ActivationLayer.results = }")
     print(f"{Linear_layer2.results = }")
     print(f"{ActivationLayer2.results = }")
-    print(f"{Linear_layer3.results = }")
     print(f"{LossLayer.results = }")
 
     print("=" * 40,"\nBackwarding")
 
-    LossLayer.backward(Linear_layer3.results)
-    Linear_layer3.backward(LossLayer.derivative)
-    ActivationLayer2.backward(Linear_layer3.derivative)
+    LossLayer.backward(ActivationLayer2.results)
+    ActivationLayer2.backward(LossLayer.derivative)
     Linear_layer2.backward(ActivationLayer2.derivative)
     ActivationLayer.backward(Linear_layer2.derivative)
     Linear_layer.backward(ActivationLayer.derivative)
     print(f"{LossLayer.derivative = }")
-    print(f"{Linear_layer3.derivative = }")
     print(f"{ActivationLayer2.derivative = }")
     print(f"{Linear_layer2.derivative = }")
     print(f"{ActivationLayer.derivative = }")
@@ -242,10 +237,10 @@ def anim(i):
     # plt.plot(np.arange(30000), loss)
     fig.clear()
     plt.scatter(X, y, c='g')
-    plt.plot(X, f(X))
-    plt.plot(X, Linear_layer3.results)
+    plt.plot(X, y)
+    plt.plot(X, ActivationLayer2.results)
     print("_"*30)
-ani = FuncAnimation(fig, anim, frames=30000, interval=30000, repeat=False)
+ani = FuncAnimation(fig, anim, frames=30000, interval=300, repeat=False)
 plt.show()
 # print(Linear_layer.weights)
 # # print(Linear_layer.bias)
