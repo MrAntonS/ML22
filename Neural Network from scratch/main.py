@@ -1,4 +1,6 @@
-import sys
+
+# ...existing code...
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -36,7 +38,7 @@ class LossFunction:
     def forward(self, y, y_pred):
         pass
 
-    def backward(self, y, y_pred):
+    def backward(self, y_pred):
         pass
 
 
@@ -59,16 +61,11 @@ class CCELoss(LossFunction):
 class MeanSquared(LossFunction):
     def forward(self, y, y_pred):
         self.inputs = y.copy()
-        print(f"{(y_pred - y) ** 2 = }")
-        print(f"{y_pred = }")
-        print(f"{y = }")
-        self.results = np.sum((y_pred - y) ** 2)
-        return self.results
+        self.results = np.mean(np.square(y_pred - y), axis=0)
+        return np.mean(self.results)
 
     def backward(self, y_pred):
-        print(f"{self.inputs = }")
-        print(f"{y_pred = }")
-        self.derivative = -2 * (self.inputs - y_pred)
+        self.derivative = 2 * (y_pred - self.inputs) / y_pred.shape[0]
         return self.derivative
 
 
@@ -90,6 +87,16 @@ class ActivationFunction:
     def backward(self, gradoutputs):
         pass
 
+class Tanh(ActivationFunction):
+    def forward(self, inputs):
+        self.inputs = inputs.copy()
+        self.results = np.tanh(inputs)
+        return self.results
+
+    def backward(self, gradoutputs):
+        self.derivative = (1 - np.tanh(self.inputs) ** 2) * gradoutputs
+        return self.derivative
+
 
 class Sigmoid(ActivationFunction):
     def __init__(self):
@@ -102,13 +109,9 @@ class Sigmoid(ActivationFunction):
 
     def backward(self, gradoutputs):
         exp = self.f(self.inputs)
-        print(exp.shape)
         self.derivative =  exp * (1 - exp)
-        print(self.derivative.shape)
         self.derivative = self.derivative * gradoutputs
-        print(self.derivative.shape)
-        print(f"{self.derivative=}")
-        return self.derivative 
+        return self.derivative
 
 
 class Relu(ActivationFunction):
@@ -117,12 +120,11 @@ class Relu(ActivationFunction):
 
     def forward(self, inputs):
         self.inputs = inputs.copy()
-        self.results = self.f(inputs)
+        self.results = np.maximum(0, inputs)
         return self.results
 
     def backward(self, gradoutputs):
-        self.derivative = np.where(0 >= self.inputs, 0.1, 1)
-        print(f"{self.derivative=}")
+        self.derivative = (self.inputs > 0).astype(float)
         self.derivative = self.derivative * gradoutputs
         return self.derivative
 
@@ -139,6 +141,17 @@ class Softmax(ActivationFunction):
         return self.derivative
 
 
+class LinearActivation(ActivationFunction):
+    def forward(self, inputs):
+        self.inputs = inputs.copy()
+        self.results = inputs
+        return self.results
+
+    def backward(self, gradoutputs):
+        self.derivative = gradoutputs
+        return self.derivative
+
+
 '''
 Layers
 '''
@@ -146,22 +159,19 @@ Layers
 
 class LinearLayer:
     def __init__(self, num_of_inputs, amount_of_neurons, lr=None):
-        self.weights = np.random.randn(amount_of_neurons, num_of_inputs)
+        # Use smaller initial weights
+        self.weights = np.random.randn(amount_of_neurons, num_of_inputs) * 0.1
         self.bias = np.zeros(amount_of_neurons)
         self.results = None
         self.derivative = None
         self.inputs = None
-        self.lr = np.float64(0.005) if lr == None else lr
+        self.lr = 0.05 if lr is None else lr
 
     def grad(self, gradoutputs):
-        print(f"{self.weights = }")
-        print(f"{gradoutputs = }")
-        print(f"{self.inputs = }")
-        print(f"{self.inputs.T @ gradoutputs = }")
         self.derivative = gradoutputs @ self.weights
-        gradW = np.mean(self.inputs.T @ gradoutputs, axis=1)
-        gradB = np.mean(gradoutputs, axis=0) 
-        return gradW.T, gradB
+        gradW = gradoutputs.T @ self.inputs / self.inputs.shape[0]
+        gradB = np.mean(gradoutputs, axis=0)
+        return gradW, gradB
 
     def forward(self, inputs):
         self.inputs = inputs.copy()
@@ -170,11 +180,8 @@ class LinearLayer:
 
     def backward(self, gradoutputs, iteration=1):
         gradW, gradB = self.grad(gradoutputs)
-        print(f"{gradW = }")
-        print(f"{gradB = }")
-        lr = self.lr / np.sqrt(iteration)
-        self.weights = self.weights - lr * gradW
-        self.bias = self.bias - lr * gradB
+        self.weights -= self.lr * gradW
+        self.bias -= self.lr * gradB
         return self.derivative
 
     def get_weights(self):
@@ -186,61 +193,56 @@ def f(X):
 def f1(X):
     return X ** 2 + 2
 
-X = np.linspace(-7, 7, 3, dtype=np.float64).reshape(-1, 1)
-y = f(X).T + np.random.randn(3) * 0.1
-y = y.T
+X = np.linspace(-7, 7, 50, dtype=np.float64).reshape(-1, 1)
+y = f(X) + np.random.randn(50, 1) * 0.1  # shape (100, 1)
 # X = np.array([[-1], [0], [1]])
 # y = np.array([[0, 1, 0]]).T
 fig = plt.figure()
-Linear_layer = LinearLayer(1, 2)
-Linear_layer2 = LinearLayer(2, 1)
-ActivationLayer = Relu()
-ActivationLayer2 = Relu()
+Linear_layer1 = LinearLayer(1, 64, lr=0.5)
+ActivationLayer1 = Tanh()
+Linear_layer2 = LinearLayer(64, 32, lr=0.5)
+ActivationLayer2 = Tanh()
+Linear_layer3 = LinearLayer(32, 1, lr=0.5)
+ActivationLayer3 = LinearActivation()  # Output layer is linear
 LossLayer = MeanSquared()
 loss = []
 
+predictions = []
+losses = []
+iterations_to_show = []
 
-def anim(i):
-    global Linear_layer, ActivationLayer, Linear_layer2, ActivationLayer2, LossLayer, loss
-# for i in range(10000):
-    print("Inputs")
-    print(f"{X = }")
-    print(f"{y = }")
+num_iterations = 10000
+show_every = 200
 
-    print("Forwarding")
-
-    Linear_layer.forward(X)
-    ActivationLayer.forward(Linear_layer.results)
-    Linear_layer2.forward(ActivationLayer.results)
+for i in range(num_iterations):
+    Linear_layer1.forward(X)
+    ActivationLayer1.forward(Linear_layer1.results)
+    Linear_layer2.forward(ActivationLayer1.results)
     ActivationLayer2.forward(Linear_layer2.results)
-    LossLayer.forward(y, ActivationLayer2.results)
-    print(f"{Linear_layer.results = }")
-    print(f"{ActivationLayer.results = }")
-    print(f"{Linear_layer2.results = }")
-    print(f"{ActivationLayer2.results = }")
-    print(f"{LossLayer.results = }")
+    Linear_layer3.forward(ActivationLayer2.results)
+    ActivationLayer3.forward(Linear_layer3.results)
+    LossLayer.forward(y, ActivationLayer3.results)
 
-    print("=" * 40,"\nBackwarding")
-
-    LossLayer.backward(ActivationLayer2.results)
-    ActivationLayer2.backward(LossLayer.derivative)
+    LossLayer.backward(ActivationLayer3.results)
+    ActivationLayer3.backward(LossLayer.derivative)
+    Linear_layer3.backward(ActivationLayer3.derivative)
+    ActivationLayer2.backward(Linear_layer3.derivative)
     Linear_layer2.backward(ActivationLayer2.derivative)
-    ActivationLayer.backward(Linear_layer2.derivative)
-    Linear_layer.backward(ActivationLayer.derivative)
-    print(f"{LossLayer.derivative = }")
-    print(f"{ActivationLayer2.derivative = }")
-    print(f"{Linear_layer2.derivative = }")
-    print(f"{ActivationLayer.derivative = }")
-    print(f"{Linear_layer.derivative = }")
-    loss.append(LossLayer.results)
-    print(f"{LossLayer.results = }")
-    # plt.plot(np.arange(30000), loss)
-    fig.clear()
+    ActivationLayer1.backward(Linear_layer2.derivative)
+    Linear_layer1.backward(ActivationLayer1.derivative)
+
+    if i % show_every == 0:
+        predictions.append(ActivationLayer3.results.copy())
+        losses.append(LossLayer.results)
+        iterations_to_show.append(i)
+
+def anim(frame):
+    plt.clf()
     plt.scatter(X, y, c='g')
-    plt.plot(X, y)
-    plt.plot(X, ActivationLayer2.results)
-    print("_"*30)
-ani = FuncAnimation(fig, anim, frames=30000, interval=0, repeat=False)
+    plt.plot(X, y, label='True')
+    plt.plot(X, predictions[frame], label='Prediction')
+    plt.legend()
+    plt.title(f"Iteration: {iterations_to_show[frame]}, Loss: {float(losses[frame]):.4f}")
+
+ani = FuncAnimation(fig, anim, frames=len(predictions), interval=500)
 plt.show()
-# print(Linear_layer.weights)
-# # print(Linear_layer.bias)
